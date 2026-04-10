@@ -1,0 +1,73 @@
+---
+title: "Backend Engineering Skills — Node.js, NestJS, APIs"
+description: "Eric's backend skill set: Node.js at mastery level, Express.js, NestJS, API integration, and JWT/OAuth authentication for production systems."
+---
+
+Eric's primary expertise lies in backend engineering — building production systems that are reliable, scalable, and secure at scale. From stateless REST APIs handling millions of requests to modular NestJS services with layered auth, the backend is where the most complex and impactful work happens.
+
+## Core technologies
+
+| Technology | Proficiency | Notes |
+|---|---|---|
+| Node.js | Mastered (100%) | Used in every production project |
+| Express.js | Expert (95%) | REST API development, middleware design |
+| NestJS | Proficient (80%) | Modular architecture with guards, interceptors, pipes |
+| API Integration | Expert (95%) | Third-party services, webhooks, REST/GraphQL |
+| Authentication (JWT/OAuth) | Expert (90%) | Stateless auth, token refresh, role-based access |
+
+## NestJS architecture
+
+NestJS enforces structure through its module system — each feature lives in an isolated module with its own controllers, services, and providers. This separation keeps large codebases maintainable as they grow.
+
+**Guards** handle authentication and authorization at the route level, running before any controller logic. **Interceptors** wrap request/response cycles for logging, response transformation, and timing. **Pipes** validate and transform incoming data using class-validator before it reaches business logic, keeping controller code clean.
+
+```typescript NestJS guard example
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  constructor(private jwtService: JwtService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const token = request.headers.authorization?.split(' ')[1];
+    if (!token) return false;
+    try {
+      request.user = this.jwtService.verify(token);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+```
+
+This guard extracts the bearer token from the `Authorization` header, verifies it against the JWT secret, and attaches the decoded payload to `request.user`. Applied via `@UseGuards(JwtAuthGuard)` at the controller or route level, it enforces authentication without touching business logic.
+
+## API design principles
+
+Well-designed APIs are predictable, defensive, and observable. The key principles applied across Eric's production projects:
+
+**Resource naming and versioning** — Routes use nouns (`/users`, `/orders/:id`), HTTP verbs carry semantic meaning, and all public APIs are versioned (`/v1/`) so breaking changes never affect existing consumers.
+
+**Request validation** — Incoming payloads are validated at the boundary using DTOs with class-validator decorators before any service layer code runs. Invalid requests fail fast with structured error responses.
+
+**Rate limiting** — All public endpoints are protected with sliding-window rate limiting via Redis (see the [API Gateway post](/blog/api-gateway)). Limits are enforced per IP and per authenticated user, with `Retry-After` headers returned on 429 responses.
+
+**Error handling** — A global NestJS exception filter normalizes all unhandled errors into a consistent JSON response shape. This keeps client-side error handling predictable regardless of which service or controller threw the error.
+
+<Tip>
+  JWT and session-based auth each have real tradeoffs — JWTs are stateless and horizontally scalable, but revocation is hard without a blocklist. Sessions centralize state in Redis and revoke instantly, but require sticky routing or a shared store. See the full breakdown at [JWT vs Session Auth](/blog/jwt-vs-session).
+</Tip>
+
+## Related reading
+
+<CardGroup cols={2}>
+  <Card title="Building a 50M req/day API Gateway" icon="server" href="/blog/api-gateway">
+    Architecture, rate limiting, and routing decisions behind a high-throughput API gateway built with Node.js and Redis.
+  </Card>
+  <Card title="JWT vs Session Auth" icon="lock" href="/blog/jwt-vs-session">
+    A practical comparison of stateless JWT auth and server-side session management, with real tradeoffs for production systems.
+  </Card>
+</CardGroup>

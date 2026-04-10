@@ -1,0 +1,56 @@
+---
+title: "Frontend Skills — React, Next.js, TypeScript & Tailwind"
+description: "Eric's frontend expertise: React and Next.js for performant UIs, TypeScript for type safety, and Tailwind CSS for scalable design systems."
+---
+
+While backend is Eric's primary focus, he also builds polished, production-ready frontends. Every project in the portfolio ships a complete product — the UI is not an afterthought. React and Next.js handle the component layer, TypeScript enforces correctness throughout, and Tailwind CSS drives a consistent, maintainable design system.
+
+## Core technologies
+
+| Technology | Proficiency | Notes |
+|---|---|---|
+| React.js / Next.js | Proficient (85%) | Component architecture, SSR/SSG, App Router |
+| TypeScript / JS | Expert (95%) | Type-safe codebases, generics, utility types |
+| Tailwind CSS | Expert (90%) | Utility-first styling, custom design tokens |
+| HTML5 & CSS3 | Mastered (100%) | Semantic markup, accessibility, animations |
+
+## Next.js patterns
+
+Next.js provides multiple rendering strategies, and choosing the right one for each route is what separates fast from slow:
+
+- **SSG (Static Site Generation)** — Pages built at deploy time. Best for content that rarely changes: blog posts, documentation, marketing pages.
+- **SSR (Server-Side Rendering)** — Pages rendered on each request with fresh data. Used when content is personalized or changes frequently.
+- **ISR (Incremental Static Regeneration)** — Static pages that revalidate in the background after a configurable TTL. The best of both worlds for semi-dynamic content.
+- **Suspense streaming** — With the App Router, async server components stream HTML in chunks as data resolves. Heavy data fetches no longer block the initial HTML response.
+
+The App Router's `fetch` integration with the Next.js cache makes fine-grained cache invalidation possible without a full rebuild:
+
+```typescript Next.js cache invalidation
+// Tag cache entries by the data they depend on
+fetch('/api/products', { next: { tags: ['products'] } });
+
+// In a server action — invalidate a specific cache tag
+import { revalidateTag } from 'next/cache';
+revalidateTag('products');
+```
+
+Calling `revalidateTag('products')` from a server action or route handler immediately invalidates every cached `fetch` response that was tagged with `'products'`, without touching anything else in the cache.
+
+## Design system approach
+
+This portfolio is a working example of a token-based design system for a solo developer. The approach centers on JavaScript-driven CSS generation — the theme tokens (background, surface, border, text, accent, muted, highlight, and green) are defined in a single `theme.js` file and injected at runtime via a `buildCss()` function. Switching between light and dark mode swaps the token set; every component that references the tokens updates automatically.
+
+The portfolio uses Tailwind v4 with a single `@import "tailwindcss"` directive. Because tokens are managed at the JavaScript level and injected as inline styles or generated CSS, you get the speed of utility-first Tailwind alongside runtime theming — without a separate config file.
+
+The design system covers:
+- **Color roles** — `bg`, `surface`, `border`, `text`, `muted`, `accent`, `highlight`, and `green` — each with distinct light and dark values
+- **Typography** — Syne for display and headings, JetBrains Mono for code and labels, DM Sans for body text
+- **Motion** — Fade-in animations and smooth `color`/`background` transitions on all interactive elements
+
+<Info>
+  The **JVM Ecosystem** (Java/JVM and Kotlin) is an active learning path — currently at early proficiency. This is a deliberate expansion toward enterprise distributed systems and is not yet used in production projects.
+</Info>
+
+<Tip>
+  For a deep dive into how this portfolio's design system is structured — including the token naming convention and Tailwind config — see [Design system architecture for a solo dev](/blog/design-system).
+</Tip>

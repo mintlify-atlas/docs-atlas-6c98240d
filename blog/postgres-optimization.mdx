@@ -1,0 +1,59 @@
+---
+title: "PostgreSQL Query Optimization: From 4s to 40ms"
+description: "How EXPLAIN ANALYZE, a composite partial index, and query restructuring reduced a production PostgreSQL query from 4.2 seconds to 38 milliseconds."
+---
+
+A 4-second query on a user-facing endpoint is not a performance concern — it is an outage in slow motion. Eric hit this on a production timeline endpoint where PostgreSQL was doing a full sequential scan on a 12 million row table, every time, for every user. The fix took three targeted changes and brought the query from 4.2 seconds to 38 milliseconds.
+
+## Step 1: EXPLAIN ANALYZE
+
+Before touching anything, run `EXPLAIN (ANALYZE, BUFFERS)`. This is non-negotiable. Guessing at the bottleneck wastes time; the query planner will tell you exactly what it is doing.
+
+```sql EXPLAIN ANALYZE example
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM posts
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+Look for two signals in the output:
+
+- **Sequential scans on large tables** — the planner is reading every row because no suitable index exists.
+- **Nested loop joins with high row estimates** — the planner guessed wrong about cardinality, picked a join strategy that compounds the cost.
+
+In this case the plan showed a sequential scan over the full `posts` table followed by an in-memory sort. PostgreSQL was reading 12 million rows to return 20.
+
+## Step 2: The missing composite index
+
+The query filtered on `user_id` and sorted on `created_at DESC`. Neither column was indexed together, and the table had a soft-delete pattern where `deleted_at IS NULL` excluded a significant portion of rows from every result set.
+
+The fix was a composite partial index that matched the query exactly:
+
+```sql Composite partial index
+-- (user_id, created_at DESC) composite index
+-- Partial: only indexes non-deleted rows
+CREATE INDEX CONCURRENTLY idx_posts_user_date
+ON posts (user_id, created_at DESC)
+WHERE deleted_at IS NULL;
+```
+
+The index is composite so PostgreSQL can satisfy both the `WHERE user_id = $1` filter and the `ORDER BY created_at DESC` sort from the index alone — no sort step, no sequential scan. The partial condition `WHERE deleted_at IS NULL` means the index only stores non-deleted rows, which halved the index size on this dataset and made writes faster because deleted rows no longer trigger index maintenance.
+
+## Results
+
+After the index was built and the query planner picked it up:
+
+- **Query time: 4.2s → 38ms** on the production dataset
+- **Index size halved** compared to a full index on the same columns
+- **Write performance improved** — fewer rows in the index means faster `INSERT` and `UPDATE` on the `posts` table
+
+Running `EXPLAIN (ANALYZE, BUFFERS)` again confirmed the planner switched to an index scan with 0 sort operations. The sequential scan was gone.
+
+<Tip>
+  Use `CREATE INDEX CONCURRENTLY` in production. It builds the index without holding a lock on the table, so reads and writes continue uninterrupted while the index is being constructed. Without `CONCURRENTLY`, a standard `CREATE INDEX` takes an `ACCESS EXCLUSIVE` lock and blocks all table access until it finishes.
+</Tip>
+
+<Tip>
+  For more on database design and query patterns Eric uses across projects, see [/skills/databases](/skills/databases).
+</Tip>

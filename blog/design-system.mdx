@@ -1,0 +1,72 @@
+---
+title: "Token-based Design System Architecture for Solo Developers"
+description: "How to build a scalable, token-based design system using CSS custom properties and Tailwind CSS — no design team, no Figma plugins, no complexity."
+---
+
+You do not need a Figma team or a dedicated design systems engineer to have a coherent, maintainable UI. A token-based approach using CSS custom properties and Tailwind CSS gives you a single source of truth for every visual decision — colors, spacing, radius, type — without adding tooling overhead.
+
+## CSS variables as the foundation
+
+All colors, spacing, radius, and type scale live as CSS custom properties on `:root`. This makes them available everywhere in your stylesheet and in Tailwind's configuration. When you want to change a color, you change it once. Every component that references that token updates automatically.
+
+```css Design token foundation
+:root {
+  --color-bg: #f8f8fc;
+  --color-surface: #ffffff;
+  --color-border: #e2e2ef;
+  --color-text: #1e1e2e;
+  --color-accent: #1a56db;
+  --color-muted: #6c6c8a;
+  --radius-card: 8px;
+  --radius-btn: 4px;
+}
+
+/* Dark theme — swap the class, tokens update everywhere */
+.dark {
+  --color-bg: #0a0a0f;
+  --color-surface: #111118;
+  --color-text: #cdd6f4;
+  --color-accent: #89b4fa;
+}
+```
+
+Every value is named by its role, not its appearance. `--color-accent` rather than `--blue-500`. This keeps the token names stable even when the visual values change.
+
+## Tailwind on top
+
+Tailwind's utility classes reference your custom properties through its configuration. You get the speed of utility-first development with the consistency of a token system. There is no fighting the framework — Tailwind applies your tokens, not its own defaults.
+
+Reference CSS variables in your `tailwind.config.js` using `var()` syntax:
+
+```typescript tailwind.config.ts
+export default {
+  theme: {
+    extend: {
+      colors: {
+        bg: 'var(--color-bg)',
+        surface: 'var(--color-surface)',
+        accent: 'var(--color-accent)',
+        muted: 'var(--color-muted)',
+      },
+      borderRadius: {
+        card: 'var(--radius-card)',
+        btn: 'var(--radius-btn)',
+      },
+    },
+  },
+};
+```
+
+Now `bg-accent`, `text-muted`, and `rounded-card` all resolve through your tokens. A designer changing `--color-accent` in one place propagates through every Tailwind utility that references it.
+
+## Theme switching
+
+Swapping themes means swapping a class. Add `.dark` to `:root` or `body`, and every token that has a dark override updates at once. No JavaScript needed to walk the DOM and change individual values — one source of truth, zero duplication.
+
+<Tip>
+  This portfolio uses this exact approach. The dark/light mode toggle simply toggles the `.dark` class on the root element. All colors, surfaces, and borders update instantly because they all resolve from the same set of custom properties.
+</Tip>
+
+<Info>
+  This system scales cleanly as the component count grows. Adding a new component means referencing existing tokens — `var(--color-surface)` for backgrounds, `var(--color-border)` for outlines — rather than picking colors from scratch. Visual consistency is structural, not discipline-dependent.
+</Info>

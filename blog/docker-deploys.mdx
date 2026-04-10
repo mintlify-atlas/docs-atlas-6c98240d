@@ -1,0 +1,51 @@
+---
+title: "Zero-downtime Deploys with Docker and GitHub Actions"
+description: "How a blue-green Docker Compose deployment strategy with GitHub Actions CI/CD eliminated downtime and cut deployment time from 8 minutes to 90 seconds."
+---
+
+Before this setup, every deploy was a nervous moment. Services would briefly return 503s, engineers would get paged, and rollbacks meant scrambling through SSH sessions. A structured blue-green strategy with automated health checks changed that completely.
+
+## The blue-green strategy
+
+Run two identical stacks — blue and one green. Nginx routes all traffic to whichever is currently live. On deploy, spin up the inactive stack, run health checks against it, and only then cut Nginx over. If health checks fail, the script exits before the switch ever happens — zero user impact.
+
+```yaml docker-compose.blue.yml (simplified)
+services:
+  app-blue:
+    image: myapp:${VERSION}
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      retries: 3
+```
+
+Each stack runs on a different port. Nginx acts as the single entry point and is reconfigured only after the new stack passes health checks. The old stack is torn down after the switch confirms stable traffic.
+
+## The GitHub Actions pipeline
+
+The pipeline follows a strict sequence: build the image, push to the registry, spin up the inactive stack, run health checks, cut Nginx over, then tear down the old stack. No step proceeds until the previous one succeeds.
+
+```yaml GitHub Actions deploy step (simplified)
+- name: Deploy blue-green
+  run: |
+    docker compose -f docker-compose.${NEW_COLOR}.yml up -d
+    ./scripts/wait-for-health.sh ${NEW_COLOR}
+    ./scripts/switch-nginx.sh ${NEW_COLOR}
+    docker compose -f docker-compose.${OLD_COLOR}.yml down
+```
+
+The `wait-for-health.sh` script polls the health endpoint on the new stack with retries. The `switch-nginx.sh` script updates the upstream block and reloads Nginx with zero dropped connections. If either script fails, the pipeline exits and the old stack keeps serving traffic.
+
+## Results
+
+From 8-minute manual deploys to hands-off 90-second pipeline runs. Zero downtime incidents in the last six months. The biggest win is not the speed — it is the confidence. Deploys stopped being events.
+
+<Tip>
+  The health check rollback is the most important part of the whole system. If `wait-for-health.sh` exits with a non-zero code, the Nginx switch never runs. The pipeline fails visibly in GitHub Actions, the old stack stays live, and no user sees an error. Build your health check script to be strict about what it accepts.
+</Tip>
+
+<Note>
+  For more on how Eric's production projects are structured and what tools they use, see the [projects overview](/projects/nexus-api-gateway).
+</Note>

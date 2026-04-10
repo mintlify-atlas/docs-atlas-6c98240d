@@ -1,0 +1,36 @@
+---
+title: "DevNotes — Technical Writing on Backend & Systems"
+description: "Eric's blog: backend architecture, authentication, PostgreSQL optimization, DevOps, frontend patterns, and career lessons from 4+ years in production."
+---
+
+DevNotes is Eric's technical writing series — candid, practical posts drawn from real production experience in backend systems, DevOps, and full-stack development. Every post covers a problem Eric encountered and solved in production, with the code, context, and trade-offs included.
+
+## Topics covered
+
+<CardGroup cols={2}>
+  <Card title="Building a 50M req/day API Gateway" icon="server" href="/blog/api-gateway">
+    How Eric architected a high-throughput Node.js API gateway with Redis rate limiting and JWT caching.
+  </Card>
+  <Card title="JWT vs Session Auth" icon="shield-halved" href="/blog/jwt-vs-session">
+    A practical deep-dive into stateless vs stateful auth, with real-world trade-offs for distributed systems.
+  </Card>
+  <Card title="PostgreSQL: from 4s to 40ms" icon="database" href="/blog/postgres-optimization">
+    Indexes, explain plans, and the three changes that made the slowest endpoint 100× faster.
+  </Card>
+  <Card title="Zero-downtime Docker deploys" icon="ship" href="/blog/docker-deploys">
+    Rolling deployments with Docker Compose and health checks — no downtime, no surprises.
+  </Card>
+  <Card title="Next.js App Router SSR patterns" icon="display" href="/blog/nextjs-ssr">
+    Server components, streaming, and when to reach for client-side rendering in the App Router.
+  </Card>
+  <Card title="Design system for a solo dev" icon="palette" href="/blog/design-system">
+    Building a token-based design system with CSS custom properties and Tailwind CSS.
+  </Card>
+  <Card title="4 years in — career lessons" icon="briefcase" href="/blog/career-lessons">
+    What Eric learned about shipping, communication, and growth across 4+ years in engineering.
+  </Card>
+</CardGroup>
+
+<Info>
+  All posts are written by Eric based on real production experience — no filler, no synthetic examples. If the code is here, it shipped.
+</Info>

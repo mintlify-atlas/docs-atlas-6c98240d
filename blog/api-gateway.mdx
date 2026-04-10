@@ -1,0 +1,64 @@
+---
+title: "Building a 50M req/day API Gateway with Node.js"
+description: "How Eric architected a high-throughput Node.js API gateway with Redis rate limiting, JWT caching, and WebSockets — serving 5M+ daily requests at sub-40ms P99."
+---
+
+Eric built this gateway to survive a 50× traffic increase — from 1M to 50M requests per day — without a rewrite of the underlying services. The solution combined Redis-backed rate limiting, JWT verification caching, and a WebSocket layer for real-time dashboards, all running behind a horizontally scalable Node.js cluster.
+
+## The problem
+
+The original setup was a single Express instance behind Nginx. At 1M requests per day it held up fine. At 10M, timeouts started appearing. At 20M, the instance crashed under memory pressure.
+
+The root cause was synchronous, blocking middleware sitting in the hot path of every request:
+
+```js Original blocking middleware
+app.use('/api', (req, res, next) => {
+  verifyJWT(req.headers.authorization); // blocking!
+  rateLimitCheck(req.ip);               // db call!
+  next();
+});
+```
+
+Every request triggered a synchronous JWT verification and a database round-trip for the rate limit check. Under load, these two operations serialised the event loop and exhausted the connection pool simultaneously.
+
+## The Redis solution
+
+Eric moved all rate-limiting state into Redis using sliding window counters. The `INCR` + `EXPIRE` pipeline is sub-millisecond and non-blocking — the Node.js event loop never stalls waiting for a result.
+
+```js Rate limiter with Redis pipeline
+// Sliding window rate limiter — sub-millisecond, non-blocking
+const pipeline = redis.pipeline();
+pipeline.incr(`rate:${req.ip}`);
+pipeline.expire(`rate:${req.ip}`, WINDOW_SECONDS);
+const [count] = await pipeline.exec();
+
+if (count > LIMIT) {
+  return res.status(429).json({ error: 'Rate limit exceeded' });
+}
+```
+
+Both commands are sent in a single round-trip. Redis executes them atomically and returns both results together, which eliminates the race condition present in a naive `GET → compare → SET` approach.
+
+## JWT verification caching
+
+Raw JWT verification runs a cryptographic operation on every request. Under high throughput that CPU cost compounds quickly. Eric cached verification results in Redis with a short TTL — slightly less than the token's own expiry — so repeat requests from the same client reuse the cached result rather than re-running the signature check.
+
+The result: middleware overhead dropped from **12ms to under 0.8ms** per request. At 50M requests per day that saving accumulates to thousands of CPU-hours recovered per quarter.
+
+## Results
+
+After shipping the Redis layer and JWT caching:
+
+- **99.98% uptime** over the last quarter
+- **P99 latency under 40ms** across all gateway endpoints
+- **Horizontal scaling** by adding nodes — no shared state, no coordination overhead
+
+The architecture scales linearly. Adding a new gateway node requires no configuration changes; each node connects to the same Redis cluster and picks up its share of traffic immediately.
+
+<Tip>
+  For a deeper look at the JWT verification strategy used in the gateway, read [JWT vs Session Auth — Choosing for Distributed Systems](/blog/jwt-vs-session).
+</Tip>
+
+<Note>
+  This is the architecture behind the Nexus API Gateway project. See the full implementation details at [/projects/nexus-api-gateway](/projects/nexus-api-gateway).
+</Note>

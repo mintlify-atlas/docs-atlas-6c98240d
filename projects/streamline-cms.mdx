@@ -1,0 +1,59 @@
+---
+title: "Streamline CMS — Headless, Multi-tenant, Webhook-driven"
+description: "A fully headless content management platform with Next.js admin UI, unlimited multi-tenant support, webhook pipelines, and role-based access control."
+---
+
+Streamline is a headless content management platform built for teams that need flexibility without the overhead of traditional CMS setups. It supports unlimited tenants, ships with a clean Next.js admin panel, and delivers content changes downstream via configurable webhook pipelines — making it a strong foundation for content-heavy production environments.
+
+## Overview
+
+Unlike monolithic CMS platforms, Streamline separates the content layer entirely from the presentation layer. Content teams manage everything through the admin UI; developers consume a clean API from whatever frontend they choose. The multi-tenant model means a single Streamline deployment can power multiple independent content organizations, each with its own data isolation, roles, and webhook configurations.
+
+Streamline currently powers several production content teams, with a data model built on PostgreSQL and Prisma for type-safe schema management.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Multi-tenant architecture" icon="building">
+    Each tenant operates in full isolation — separate content namespaces, independent role configurations, and dedicated webhook targets.
+  </Card>
+  <Card title="Webhook pipelines" icon="arrow-right-arrow-left">
+    Trigger external systems automatically when content changes. Publish events fire webhooks to CDN invalidation endpoints, notification services, or any custom consumer.
+  </Card>
+  <Card title="Role-based access control" icon="user-shield">
+    Granular permissions let you assign editors, reviewers, and admins per tenant. No user can access content outside their assigned scope.
+  </Card>
+  <Card title="Next.js admin panel" icon="display">
+    A fast, responsive admin interface built with Next.js — supporting content creation, publishing workflows, and tenant management out of the box.
+  </Card>
+</CardGroup>
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Admin UI | Next.js (App Router) |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| Auth | JWT + RBAC |
+| Webhooks | HTTP POST with HMAC signature |
+
+## Webhook payload
+
+When content is published, Streamline fires a signed POST request to all configured webhook endpoints for that tenant. Here's an example payload:
+
+```json
+{
+  "event": "content.published",
+  "tenant": "acme-corp",
+  "content": {
+    "id": "post-123",
+    "type": "article",
+    "status": "published"
+  }
+}
+```
+
+The `tenant` field scopes the event so multi-tenant webhook consumers can filter reliably. Consumers can verify the origin and react to the event in any way they choose — CDN invalidation, notification services, or custom integrations.
+
+Explore the source and documentation at [github.com/e-ner](https://github.com/e-ner).

@@ -1,0 +1,59 @@
+---
+title: "Next.js App Router: SSR Patterns That Scale in Production"
+description: "Streaming with Suspense, partial pre-rendering, and tag-based cache invalidation strategies from six months of Next.js App Router in production."
+---
+
+App Router was a paradigm shift. After six months in production, the patterns that held up under real load are not the ones covered in tutorials — they are the ones that account for slow data, shared caches, and teams that need to move fast without breaking things.
+
+## Streaming for perceived performance
+
+Wrapping slow data fetches in Suspense boundaries lets the shell render immediately. Users see something in under 200ms even when the underlying query takes 800ms. The key is separating static shell content from dynamic data — render what you can, stream the rest.
+
+```tsx Suspense streaming pattern
+import { Suspense } from 'react';
+
+export default function ProductPage() {
+  return (
+    <div>
+      <StaticHeader /> {/* renders immediately */}
+      <Suspense fallback={<ProductSkeleton />}>
+        <SlowProductData /> {/* streams in when ready */}
+      </Suspense>
+    </div>
+  );
+}
+```
+
+The fallback renders on the server and is replaced client-side once the streamed data resolves. This gives you fast time-to-first-byte and a good loading experience without a full client-side spinner.
+
+## Tag-based cache invalidation
+
+Tag cache entries by the data they depend on, not by the route. A product page might pull from three different data sources — invalidating by route would bust everything. Invalidating by tag means only the slice that changed re-fetches.
+
+```typescript Cache tagging and revalidation
+// Tag fetch requests by the data they use
+const products = await fetch('/api/products', {
+  next: { tags: ['products'] }
+});
+
+// In a Server Action — invalidate only the products cache
+'use server';
+import { revalidateTag } from 'next/cache';
+
+export async function publishProduct(id: string) {
+  await db.products.update(id, { status: 'published' });
+  revalidateTag('products'); // only products re-fetch
+}
+```
+
+This keeps cache granular and predictable. Unrelated data on the same page is not affected when one tag is invalidated.
+
+## Key takeaways
+
+<Tip>
+  Tag-based invalidation scales far better than route-based invalidation. Route-based cache busting is convenient early on but becomes a performance liability as pages compose data from multiple sources. Invest in tagging from the start.
+</Tip>
+
+<Note>
+  App Router is a fundamentally different mental model from Pages Router. The transition involves rethinking data fetching, layouts, and caching from the ground up — not just migrating syntax. Give it time before drawing conclusions.
+</Note>

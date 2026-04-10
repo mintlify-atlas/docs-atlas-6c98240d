@@ -1,0 +1,60 @@
+---
+title: "About Eric — Background, Skills & Engineering Philosophy"
+description: "Learn about Eric's journey as a full stack developer, his technical skill set across backend and frontend, and what he cares about most."
+---
+
+Nsengiyumva Eric is a full stack developer who has spent the last 4+ years specializing in backend engineering — building the APIs, services, and data layers that power production applications. He works across the full stack when needed, but his deepest expertise lives in server-side systems: the kind that stay up under load, respond fast, and fail gracefully when something goes wrong.
+
+## Background
+
+Eric's path into software started on the backend and has stayed there by choice. He reached for Node.js and TypeScript early, found NestJS as the framework that matched how he thinks about structure, and built up a pattern library of battle-tested approaches to authentication, data modeling, and service design.
+
+His stack today reflects 4+ years of building for production:
+
+- **Backend runtime:** Node.js, TypeScript — his primary environment for server-side work
+- **Frameworks:** NestJS for structured, modular APIs; Express for lightweight services and middleware-heavy use cases
+- **Authentication:** JWT and OAuth2 flows implemented across multiple production systems
+- **Frontend:** React and Next.js for full-stack features, SSR, and internal tooling — not his primary focus, but a real part of his work
+- **Databases:** PostgreSQL for relational data, MongoDB for document stores, MySQL for legacy and e-commerce contexts, Redis for caching and rate limiting
+- **Currently learning:** Java and the JVM ecosystem — building toward cross-platform backend capabilities with Kotlin
+
+Beyond shipping code, Eric contributes to open-source projects, mentors junior and mid-level developers, and writes technical guides through his [DevNotes blog](/blog/overview). He believes that the practices you share publicly become the practices that make the broader community stronger.
+
+## Technical skills
+
+Eric's skills span the full stack with a clear center of gravity in backend and API engineering.
+
+<CardGroup cols={2}>
+  <Card title="Backend & Core" icon="server" href="/skills/backend">
+    Node.js, Express.js, NestJS, JWT/OAuth authentication, and API integration patterns. Eric's primary domain — where he has the most depth and the most production experience.
+  </Card>
+  <Card title="Database & Caching" icon="database" href="/skills/databases">
+    PostgreSQL, MongoDB, MySQL, and Redis. Covers schema design, query optimization, indexing strategies, and caching layers for high-throughput applications.
+  </Card>
+  <Card title="Frontend & UI" icon="display" href="/skills/frontend">
+    React, Next.js, TypeScript, Tailwind CSS, and HTML5/CSS3. Eric works full-stack on features and builds internal tooling — clean, functional interfaces that don't get in the way.
+  </Card>
+  <Card title="JVM ecosystem (learning path)" icon="java">
+    Java and Kotlin — an active learning path Eric started to broaden his backend capabilities beyond the Node.js ecosystem and explore cross-platform JVM tooling.
+  </Card>
+</CardGroup>
+
+<Info>
+  For a full breakdown of specific technologies, proficiency levels, and example projects in each area, follow the links in the cards above.
+</Info>
+
+## Engineering philosophy
+
+Eric's work is shaped by a set of practices he returns to across every project and every codebase.
+
+**Clean, intentional APIs.** A well-designed API is a contract. Eric designs endpoints with consumers in mind — consistent naming, predictable error shapes, and documentation that keeps the integration experience from being a guessing game. The same thinking applies to internal module interfaces: clear inputs, clear outputs, no surprises.
+
+**Modular design with NestJS primitives.** Eric uses NestJS guards, interceptors, and middleware not as boilerplate but as architectural tools. Authentication concerns belong in guards. Cross-cutting logic — logging, request transformation, error normalization — belongs in interceptors. Middleware handles the edges. Keeping concerns separated at this level means any part of the system can be tested, swapped, or scaled independently.
+
+**Performance as a first-class requirement.** Eric approaches performance work the same way he approaches debugging: measure first, then act. That means query plan analysis before adding indexes, profiling before refactoring hot paths, and load testing before a service goes to production. Assumptions about performance are expensive; measurements are cheap.
+
+**Production-grade reliability.** A service that deploys is not a service that's ready. Eric builds in health checks, structured logging, graceful shutdown, and circuit-breaking patterns from the start — not as a final phase but as part of the initial design. Systems that are observable from day one are systems that can be fixed at 2am without a crisis.
+
+<Tip>
+  Eric regularly contributes to open-source projects and publishes what he learns. If you're a developer earlier in your backend career, his [DevNotes blog](/blog/overview) covers the real problems — PostgreSQL query optimization, JWT auth patterns, zero-downtime deployments — with the specificity that generic tutorials skip.
+</Tip>

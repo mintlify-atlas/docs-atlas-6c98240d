@@ -1,0 +1,66 @@
+{
+  "projectType": "frontend",
+  "projectName": "N. Eric — Developer Portfolio",
+  "projectDescription": "A personal portfolio and blog site for Nsengiyumva Eric, a full-stack developer specializing in backend engineering with Node.js, TypeScript, and NestJS.",
+  "theme": "willow",
+  "primaryColor": "#fbc926",
+  "lightColor": "#8c73fa",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Portfolio",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["introduction", "about"]
+          },
+          {
+            "group": "Work",
+            "pages": ["experience", "projects/nexus-api-gateway", "projects/streamline-cms", "projects/jvm-explorer"]
+          },
+          {
+            "group": "Skills",
+            "pages": ["skills/backend", "skills/frontend", "skills/databases"]
+          },
+          {
+            "group": "Contact",
+            "pages": ["contact"]
+          }
+        ]
+      },
+      {
+        "tab": "Blog",
+        "groups": [
+          {
+            "group": "DevNotes",
+            "pages": ["blog/overview", "blog/api-gateway", "blog/jwt-vs-session", "blog/nextjs-ssr", "blog/docker-deploys", "blog/postgres-optimization", "blog/design-system", "blog/career-lessons"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Responsive portfolio with sticky sidebar navigation",
+    "Dark/light mode toggle with smooth transitions",
+    "Animated skill proficiency indicators across four skill groups",
+    "Project showcase with detailed project pages",
+    "Integrated DevNotes blog with category filtering and search",
+    "Blog post detail overlay with syntax-highlighted code blocks"
+  ],
+  "publicApiSurface": [
+    "Route: / — Home page (About, Experience, Projects, Contact sections)",
+    "Route: /project/:id — Individual project detail page",
+    "Route: /blog — Blog listing with category filter and search",
+    "Component: Sidebar — Sticky navigation with social links and theme toggle",
+    "Component: MobileHeader — Responsive top bar for mobile viewports",
+    "Component: About — Bio and skill proficiency grid",
+    "Component: Experience — Work history timeline",
+    "Component: Projects — Project card grid",
+    "Component: Contact — Contact section",
+    "Data: skillGroups — Four skill categories with proficiency levels",
+    "Data: experience — Work history entries",
+    "Data: projects — Showcased projects with metadata",
+    "Data: POSTS (Blog) — Seven blog posts across Backend, Frontend, DevOps, Career categories"
+  ]
+}

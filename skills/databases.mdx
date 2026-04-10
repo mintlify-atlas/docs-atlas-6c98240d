@@ -1,0 +1,62 @@
+---
+title: "Database & Caching Skills — PostgreSQL, MongoDB, Redis"
+description: "Eric's data layer expertise: PostgreSQL query optimization, MongoDB document modeling, MySQL, and Redis caching for high-performance production systems."
+---
+
+Data layer design is a critical part of backend engineering — performance often lives in the database, not the application code. A well-indexed query that runs in 30ms versus a naive one that runs in 4 seconds is the difference between a product that scales and one that doesn't. These skills cover relational and document modeling, query optimization, and caching strategies used across production systems.
+
+## Core technologies
+
+| Technology | Proficiency | Notes |
+|---|---|---|
+| PostgreSQL | Proficient (85%) | Query optimization, indexing, EXPLAIN ANALYZE, complex joins |
+| MongoDB | Expert (90%) | Document modeling, aggregation pipelines, Atlas |
+| MySQL | Proficient (80%) | Relational design, stored procedures |
+| Redis | Proficient (70%) | Caching, rate limiting, pub/sub, session storage |
+
+## PostgreSQL optimization
+
+The most impactful performance work usually comes from indexing strategy rather than query rewrites. PostgreSQL's `EXPLAIN ANALYZE` is the essential tool — it shows the actual execution plan, row estimates, and where time is being spent.
+
+Common patterns that consistently reduce query time:
+
+- **Composite indexes** — Index on multiple columns in the order they appear in `WHERE` clauses. Column order matters: the most selective column first, range columns last.
+- **Partial indexes** — Add a `WHERE` clause to the index to exclude rows that are never queried (e.g., soft-deleted records). Smaller index, faster scans.
+- **Covering indexes** — Include all columns needed by a query so PostgreSQL can satisfy it from the index alone without a heap fetch.
+
+The following index was applied to a posts table where the majority of queries filtered by `user_id` and ordered by recency, with deleted posts excluded:
+
+```sql Partial composite index for performance
+-- Composite index on (user_id, created_at DESC)
+-- Reduced query time from 4.2s to 38ms
+CREATE INDEX CONCURRENTLY idx_posts_user_date
+ON posts (user_id, created_at DESC)
+WHERE deleted_at IS NULL;
+```
+
+`CREATE INDEX CONCURRENTLY` builds the index without locking the table — safe to run on a live production database. The `WHERE deleted_at IS NULL` partial clause keeps the index compact by excluding the rows no query ever touches.
+
+## Redis for rate limiting
+
+Redis is the right tool for rate limiting because operations are atomic, sub-millisecond, and require no coordination between application instances. A sliding window limiter using `INCR` and `EXPIRE` keeps things simple and non-blocking:
+
+```js Redis sliding window rate limiter
+// Single INCR + EXPIRE pipeline — sub-millisecond, non-blocking
+const pipeline = redis.pipeline();
+pipeline.incr(`rate:${req.ip}`);
+pipeline.expire(`rate:${req.ip}`, WINDOW_SECONDS);
+const [count] = await pipeline.exec();
+```
+
+Both commands are sent in a single pipeline, eliminating a round-trip. `INCR` creates the key if it doesn't exist and returns the new count. `EXPIRE` sets the TTL only once per window — subsequent increments don't reset it. If `count` exceeds the configured limit, the request is rejected with a 429 and a `Retry-After` header.
+
+This same pattern is used in the API Gateway to enforce per-IP and per-user limits across a horizontally scaled Node.js fleet — because the counter lives in Redis, all instances share the same state without any inter-process communication.
+
+Beyond rate limiting, Redis is used for:
+- **Response caching** — Short-TTL cache for expensive aggregation queries
+- **Session storage** — Centralized session state for server-side auth flows
+- **Pub/sub** — Event fanout between microservices without a full message broker
+
+<Tip>
+  For a walkthrough of the EXPLAIN ANALYZE output, composite index design decisions, and the before/after query plans on a real production schema, see [PostgreSQL query optimization in practice](/blog/postgres-optimization).
+</Tip>

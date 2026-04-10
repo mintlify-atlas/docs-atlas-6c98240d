@@ -1,0 +1,55 @@
+---
+title: "JWT vs Session Auth — Choosing for Distributed Systems"
+description: "Stateless JWT vs stateful session auth: real-world trade-offs, revocation strategies, and a decision guide for distributed Node.js systems."
+---
+
+The choice between JWT and session-based authentication is not a matter of one being strictly better — it is a matter of which trade-offs fit your infrastructure. Eric has used both in production and the decision each time came down to topology: how many services need to verify identity, and how quickly does revocation need to propagate.
+
+## Sessions: simple and battle-tested
+
+For a single-origin application with sticky sessions or a shared Redis session store, sessions are usually the right call. The server issues a session ID, stores the session data server-side, and validates the cookie on every request by looking up the store.
+
+The advantages are real: sessions are instantly revocable (delete the record), easy to audit (enumerate all active sessions for a user), and well understood by every web framework in existence. When a user logs out, the session is gone immediately — no waiting for a token to expire.
+
+The limitation surfaces at scale. Every request requires a session store lookup. In a distributed system with multiple services, every service needs access to that shared store, or you need sticky sessions at the load balancer layer.
+
+## JWTs for distributed systems
+
+JWTs shine when an API serves mobile clients or microservices without a shared session store. The token carries its own claims — subject, roles, expiry — and any service that holds the public key can verify it without talking to a central store.
+
+```js JWT verification with RS256
+const payload = jwt.verify(token, PUBLIC_KEY, {
+  algorithms: ['RS256']
+});
+// payload.sub, payload.roles — all there, verifiable by any service
+```
+
+RS256 (asymmetric signing) is the right choice for distributed systems: the private key signs tokens in one place, and the public key — distributable freely — verifies them everywhere. No shared secret to rotate across every service.
+
+## The revocation problem
+
+The fundamental catch with JWTs: you cannot revoke them without additional infrastructure. Once issued, a valid token remains valid until it expires. If a user's account is compromised or their permissions change, you cannot invalidate existing tokens instantly.
+
+The practical answer is two-pronged:
+
+1. **Short expiry** — keep access tokens short-lived (15 minutes is a common ceiling). A compromised token has a narrow window of usefulness.
+2. **Refresh token rotation** — issue a long-lived refresh token alongside the short-lived access token. When the access token expires, the client exchanges the refresh token for a new pair. On logout or compromise, invalidate the refresh token in the store.
+
+For cases that demand immediate revocation — admin deprovisioning, payment disputes — pair JWTs with a blocklist: a Redis set of revoked token IDs checked on each request. The blocklist stays small because you only add tokens that need early revocation, not every issued token.
+
+## Decision guide
+
+| Scenario | Recommendation |
+|---|---|
+| Single-origin web app | Sessions — simpler, instant revocation |
+| Instant revocation required | Sessions with Redis store, or JWTs + blocklist |
+| Microservices, multiple verifying services | JWTs with RS256 |
+| Mobile clients or third-party API consumers | JWTs — no cookie jar needed |
+| Shared Redis store available | Either works; sessions may be simpler |
+| Stateless verification across services | JWTs — no store round-trip per request |
+
+When in doubt, start with sessions. They are easier to reason about and easier to debug. Migrate to JWTs when the topology actually demands it.
+
+<Tip>
+  For a practical look at how JWT verification caching works at high throughput — dropping middleware overhead from 12ms to 0.8ms — read [Building a 50M req/day API Gateway with Node.js](/blog/api-gateway).
+</Tip>

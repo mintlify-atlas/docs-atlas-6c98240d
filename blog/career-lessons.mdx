@@ -1,0 +1,34 @@
+---
+title: "4 Years as a Developer: Lessons No Course Teaches"
+description: "Hard-won career lessons on communication, shipping imperfect work, and growth — from Nsengiyumva Eric's first four years in professional software development."
+---
+
+Four years ago the job boards were open in one tab and a codebase was open in another — code that future-me would cringe at, written with total confidence at the time. The gap between year one and year four is not primarily technical. It is about how you work with people, how you make decisions under uncertainty, and whether you can actually get things shipped.
+
+## Communication is more important than code quality
+
+Your PRs are merged or rejected by humans, not compilers. A technically perfect solution with a vague description and no context about trade-offs will stall in review. A straightforward solution with a clear explanation of what it does, why this approach, and what was considered and rejected — that moves fast.
+
+A great PR description does not summarize the diff. It answers three questions: what problem does this solve, why is this the right approach, and what should the reviewer pay attention to? Something like:
+
+> This switches the session store from in-memory to Redis to fix the logout bug that appeared when the app runs across multiple instances. Considered JWT-only but that would have required refactoring the auth middleware. Redis adds an infra dependency — noted in the README. Please check the expiry logic in `session.ts`.
+
+That takes three minutes to write and saves an hour of back-and-forth in review comments.
+
+## Ship imperfect things
+
+The best code is code in production. Perfect code that never ships helps nobody — not your users, not your team, and not your career. The habit of getting things over the line is more valuable than the habit of getting things exactly right on the first try.
+
+Production is where you learn what actually matters. An untested assumption about user behavior reveals itself in the first week. An edge case you spent two days handling turns out to never occur. Build the muscle of shipping, then iterate. The next PR is always an opportunity to improve.
+
+## What changed
+
+Year one: optimizing for correctness and cleverness. Year four: optimizing for clarity and confidence. The mindset shift is from "how do I write this perfectly" to "how do I solve this clearly, ship it, and make it easy for someone else to understand and change." That change in frame makes every part of the job easier — code review, estimation, collaboration, and growth.
+
+<Tip>
+  Mentoring other developers is one of the fastest ways to consolidate what you know. If you are earlier in your career and want a perspective on any of this — communication, shipping, career growth — reach out at [/contact](/contact). Eric actively mentors other developers.
+</Tip>
+
+<Note>
+  This post is part of the DevNotes series. For more posts on frontend patterns, DevOps, and career growth, see the [blog overview](/blog/overview).
+</Note>

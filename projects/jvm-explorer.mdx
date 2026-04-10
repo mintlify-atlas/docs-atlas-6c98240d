@@ -1,0 +1,44 @@
+---
+title: "JVM Explorer — Flame Graphs & Memory Leak Detection"
+description: "An open-source profiling toolkit for Java and Kotlin apps with real-time flame graphs, heap analysis, IntelliJ integration, and a standalone CLI."
+---
+
+JVM Explorer is an open-source profiling toolkit that makes JVM performance problems visible. It surfaces bottlenecks through real-time flame graphs and heap analysis, giving Java and Kotlin developers a direct view into what their application is actually doing at runtime — without requiring expensive commercial tooling.
+
+## Overview
+
+Performance issues in JVM applications are notoriously opaque: thread contention, memory pressure, and hotspot methods often don't surface until they're already causing problems in production. JVM Explorer brings these to light through a visual interface that maps execution time and heap usage to the actual methods and call stacks responsible.
+
+The tool integrates directly into IntelliJ IDEA so you can profile without leaving your editor, and also ships as a standalone CLI for headless environments and CI pipelines.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Flame graphs" icon="fire">
+    Real-time flame graphs map CPU time to the exact call stacks consuming it, making it immediately clear which methods are your true bottlenecks.
+  </Card>
+  <Card title="Memory leak detection" icon="magnifying-glass">
+    Heap analysis tracks object allocations over time and flags reference chains that are preventing garbage collection — surfacing leaks before they become outages.
+  </Card>
+  <Card title="IntelliJ integration" icon="plug">
+    Install as an IntelliJ IDEA plugin to start profiling directly from your IDE. Profile specific test runs or attach to a running process without leaving the editor.
+  </Card>
+  <Card title="Standalone CLI" icon="terminal">
+    Run JVM Explorer as a CLI tool in any environment — useful for headless profiling in CI pipelines or on remote servers.
+  </Card>
+</CardGroup>
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Core profiler | Kotlin / JVM |
+| Visualization | React |
+| IDE integration | IntelliJ IDEA plugin |
+| CLI | Kotlin |
+
+<Info>
+  JVM Explorer is part of Eric's active learning path in the JVM ecosystem. It reflects his ongoing investment in low-level systems knowledge alongside his backend engineering work. Expect continued development as the tooling matures.
+</Info>
+
+Explore the source at [github.com/e-ner](https://github.com/e-ner).

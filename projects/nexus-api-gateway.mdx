@@ -1,0 +1,59 @@
+---
+title: "Nexus API Gateway — Node.js, Redis, WebSockets"
+description: "A high-performance API gateway serving 5M+ daily requests with JWT authentication, rate limiting, and real-time traffic analytics via WebSockets."
+---
+
+Nexus is a production-grade API gateway built to handle the demands of distributed microservice architectures. It centralizes request routing, enforces rate limits, validates JWT tokens, and streams live traffic analytics to a real-time dashboard — all in a single, composable layer that sits in front of your services.
+
+## Overview
+
+Nexus was designed for throughput. It currently serves **5M+ daily requests** across distributed microservices, with sub-millisecond overhead on the hot path. Rather than bolt authentication and observability onto individual services, Nexus treats these as first-class gateway concerns — keeping downstream services lean and consistent.
+
+The architecture leans on Redis for fast, atomic rate limiting state and WebSockets for pushing live traffic telemetry to the analytics dashboard without polling.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Request routing" icon="route">
+    Proxies and routes incoming requests to the correct upstream service based on path, method, and configurable rule sets.
+  </Card>
+  <Card title="Rate limiting" icon="gauge">
+    Enforces per-IP and per-token rate limits using a Redis-backed sliding window algorithm, rejecting excess traffic before it reaches your services.
+  </Card>
+  <Card title="JWT authentication" icon="shield-halved">
+    Validates and decodes JWT tokens at the gateway layer, attaching verified identity context to forwarded requests.
+  </Card>
+  <Card title="Real-time analytics" icon="chart-line">
+    Streams live request volume, latency percentiles, and error rates to an analytics dashboard over WebSockets.
+  </Card>
+</CardGroup>
+
+## Technical details
+
+| Property | Value |
+|---|---|
+| Built with | Node.js, Redis, WebSockets |
+| Daily throughput | 5M+ requests |
+| Architecture | Distributed microservices |
+| Auth | JWT (RS256) |
+| Rate limiting | Redis sliding window |
+
+## How it works
+
+The rate limiter uses a Redis pipeline to perform an atomic increment and TTL set in a single round trip. This keeps the overhead minimal even at high request volumes:
+
+```js
+// Redis-based sliding window rate limiter
+// A single INCR + EXPIRE pipeline is sub-millisecond
+const pipeline = redis.pipeline();
+pipeline.incr(`rate:${req.ip}`);
+pipeline.expire(`rate:${req.ip}`, WINDOW_SECONDS);
+const [count] = await pipeline.exec();
+if (count > LIMIT) return res.status(429).json({ error: 'Rate limit exceeded' });
+```
+
+Each request that passes rate limiting is then routed to the appropriate upstream service. JWT validation happens synchronously on the same request cycle — the decoded payload is forwarded as a request header so downstream services can trust the identity context without re-verifying the token.
+
+<Note>
+  Nexus is open source and available on GitHub. Contributions, issues, and feedback are welcome. View the source at [github.com/e-ner](https://github.com/e-ner).
+</Note>
